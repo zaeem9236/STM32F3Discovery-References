@@ -2,30 +2,32 @@
 #![no_main]
 #![no_std]
 
-// this program is used to on an LED on PORTB pin 11 
-
 use aux8::entry;
 
 #[entry]
 fn main() -> ! {
-    let (gpioe, rcc) = aux8::init();
+    let (gpioa, rcc) = aux8::init();
 
-    // enable the GPIOE peripheral
-    rcc.ahbenr.modify(|_, w| w.iopben().set_bit());
+    
+    rcc.ahbenr.modify(|_, w| w.iopaen().set_bit()); // input output port A enable in rcc register
 
-    // configure the pins as outputs
-    gpioe.moder.modify(|_, w| {
-        w.moder11().output()
-   
+    gpioa.moder.modify(|_, w|{
+        w.moder1().output(); // configure portA pin1 as output
+        w.moder0().input()   // configure portA pin0 as input
     });
 
-    // Turn on all the LEDs in the compass
-    gpioe.odr.write(|w| {
-        w.odr11().set_bit();
-        
-    });
+    
+    loop {
+        if gpioa.idr.read().idr0().bit_is_set(){ // if portA pin 0 is high
+        gpioa.odr.write(|w| {
+        w.odr1().set_bit() // write portA pin 1 high
+        });
+        }else{
+            gpioa.odr.write(|w| {
+            w.odr1().clear_bit() // write portA pin 0 low
+            });
+}
+    }
 
-    aux8::bkpt();
 
-    loop {}
 }
